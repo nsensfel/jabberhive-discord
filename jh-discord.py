@@ -27,6 +27,14 @@ parser.add_argument(
     help = 'Discord token.',
 )
 
+parser.add_argument(
+    '-c',
+    '--print-chat',
+    dest='print_chat',
+    help = 'Prints all messages',
+    action="store_true",
+)
+
 args = parser.parse_args()
 server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
@@ -46,8 +54,6 @@ def get_jh_reply ():
         while (c != b"\n"):
             c = server.recv(1)
             jh_reply += c
-
-        print(jh_reply)
 
         if ((jh_reply == b"!P \n") or (jh_reply == b"!N \n")):
             is_done = True
@@ -70,9 +76,25 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    if (message.author.id == client.user.id):
+        return
+
     server.sendall(b"?RLR " + bytes(message.content, "utf8") + b"\n")
     result = get_jh_reply()
-    print("Result: " + result)
+
+    if (args.print_chat):
+        print(
+            str(message.server)
+            + "#"
+            + str(message.channel.name)
+            + " <"
+            + str(message.author.name)
+            + "> "
+            + str(message.content)
+        )
+
+        if (len(result) > 0):
+            print("#" + str(message.channel.name) + " <- " + result)
 
     if (len(result) > 0):
         await client.send_message(message.channel, result)
