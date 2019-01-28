@@ -79,7 +79,12 @@ async def on_message(message):
     if (message.author.id == client.user.id):
         return
 
-    server.sendall(b"?RLR " + bytes(message.content, "utf8") + b"\n")
+    server.sendall(
+        b"?RLR "
+        + bytes(message.content.replace('\n', ' '), "utf8")
+        + b"\n"
+    )
+
     result = get_jh_reply()
 
     if (args.print_chat):
