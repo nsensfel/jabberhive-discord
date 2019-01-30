@@ -81,7 +81,7 @@ async def on_message(message):
 
     server.sendall(
         b"?RLR "
-        + bytes(message.content.replace('\n', ' '), "utf8")
+        + bytes(message.clean_content.replace('\n', ' '), "utf8")
         + b"\n"
     )
 
@@ -95,7 +95,7 @@ async def on_message(message):
             + " <"
             + str(message.author.name)
             + "> "
-            + str(message.content)
+            + str(message.clean_content)
         )
 
         if (len(result) > 0):
