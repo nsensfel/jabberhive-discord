@@ -2,7 +2,9 @@ import discord
 import asyncio
 import argparse
 import socket
-
+import threading
+import sys
+import time
 
 ################################################################################
 ## MAIN ########################################################################
@@ -104,4 +106,13 @@ async def on_message(message):
     if (len(result) > 0):
         await client.send_message(message.channel, result)
 
+def exit_if_disconnected ():
+    while True:
+        time.sleep(61)
+
+        if ((not client.is_logged_in) or client.is_closed):
+            print("Timed out.")
+            sys.exit()
+
+threading.Thread(target=exit_if_disconnected).start()
 client.run(args.token)
