@@ -38,6 +38,7 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+is_connected = False
 server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
 client = discord.Client()
@@ -70,14 +71,22 @@ def get_jh_reply ():
 
 @client.event
 async def on_ready():
+    global is_connected
+    global server
+    global args
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
     print('------')
-    server.connect(args.destination)
+    if (not is_connected):
+        server.connect(args.destination)
+        is_connected = True
 
 @client.event
 async def on_message(message):
+    global server
+    global args
+
     if (message.author.id == client.user.id):
         return
 
@@ -112,6 +121,7 @@ def exit_if_disconnected ():
 
         if ((not client.is_logged_in) or client.is_closed):
             print("Timed out.")
+            server.close()
             sys.exit()
 
 threading.Thread(target=exit_if_disconnected).start()
