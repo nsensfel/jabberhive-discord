@@ -3,6 +3,7 @@ import asyncio
 import argparse
 import socket
 import threading
+from threading import Lock
 import sys
 import time
 
@@ -40,10 +41,12 @@ parser.add_argument(
 args = parser.parse_args()
 is_connected = False
 server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-
 client = discord.Client()
+server_mutex = Lock()
 
 def get_jh_reply ():
+    global server
+
     is_done = False
     result = ""
     jh_reply = b""
@@ -74,6 +77,7 @@ async def on_ready():
     global is_connected
     global server
     global args
+
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
@@ -86,34 +90,43 @@ async def on_ready():
 async def on_message(message):
     global server
     global args
+    global server_mutex
 
     if (message.author.id == client.user.id):
         return
 
-    server.sendall(
-        b"?RLR "
-        + bytes(message.clean_content.replace('\n', ' '), "utf8")
-        + b"\n"
-    )
+    has_lock = False
+    try:
+        msg = bytes(message.clean_content.replace('\n', ' '), "utf8")
 
-    result = get_jh_reply()
+        server_mutex.acquire()
+        has_lock = True
+        server.sendall(b"?RLR " + msg + b"\n")
 
-    if (args.print_chat):
-        print(
-            str(message.server)
-            + "#"
-            + str(message.channel.name)
-            + " <"
-            + str(message.author.name)
-            + "> "
-            + str(message.clean_content)
-        )
+        result = get_jh_reply()
+        server_mutex.release()
+        has_lock = False
+
+        if (args.print_chat):
+            print(
+                str(message.server)
+                + "#"
+                + str(message.channel.name)
+                + " <"
+                + str(message.author.name)
+                + "> "
+                + str(message.clean_content)
+            )
+
+            if (len(result) > 0):
+                print("#" + str(message.channel.name) + " <- " + result)
 
         if (len(result) > 0):
-            print("#" + str(message.channel.name) + " <- " + result)
-
-    if (len(result) > 0):
-        await client.send_message(message.channel, result)
+            await client.send_message(message.channel, result)
+    except Exception as exception:
+        if (has_lock):
+            server_mutex.release()
+        print(exception)
 
 def exit_if_disconnected ():
     while True:
