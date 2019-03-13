@@ -97,7 +97,7 @@ async def on_message(message):
 
     has_lock = False
     try:
-        msg = bytes(message.clean_content.replace('\n', ' '), "utf8")
+        msg = bytes(message.clean_content.replace('\n', ' '), "utf8", 'strict')
 
         server_mutex.acquire()
         has_lock = True
