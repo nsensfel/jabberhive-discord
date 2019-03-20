@@ -64,7 +64,7 @@ def get_jh_reply ():
         if ((jh_reply == b"!P \n") or (jh_reply == b"!N \n")):
             is_done = True
         else:
-            jh_reply = jh_reply.decode("UTF-8")
+            jh_reply = jh_reply.decode("UTF-8", "ignore")
 
             if (jh_reply.startswith("!GR ")):
                 result = jh_reply[4:]
@@ -97,7 +97,7 @@ async def on_message(message):
 
     has_lock = False
     try:
-        msg = bytes(message.clean_content.replace('\n', ' '), "utf8", 'strict')
+        msg = bytes(message.clean_content.replace('\n', ' '), "utf8", 'ignore')
 
         server_mutex.acquire()
         has_lock = True
