@@ -97,7 +97,8 @@ async def on_message(message):
 
     has_lock = False
     try:
-        msg = bytes(message.clean_content.replace('\n', ' '), "utf8", 'ignore')
+        msg_encoded = message.clean_content.encode('utf-8')
+        msg = msg_encoded.replace(b'\n', b' ')
 
         server_mutex.acquire()
         has_lock = True
@@ -115,11 +116,11 @@ async def on_message(message):
                 + " <"
                 + str(message.author.name)
                 + "> "
-                + str(message.clean_content)
+                + str(msg_encoded)
             )
 
             if (len(result) > 0):
-                print("#" + str(message.channel.name) + " <- " + result)
+                print("#" + str(message.channel.name) + " <- " + str(result.encode('utf-8')))
 
         if (len(result) > 0):
             await client.send_message(message.channel, result)
