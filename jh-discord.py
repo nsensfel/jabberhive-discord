@@ -39,14 +39,15 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
-is_connected = False
 server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 client = discord.Client()
 server_mutex = Lock()
+already_disconnected = False
 
 def get_jh_reply ():
     global server
 
+    server_mutex
     is_done = False
     result = ""
     jh_reply = b""
@@ -72,19 +73,34 @@ def get_jh_reply ():
 
     return result
 
+
 @client.event
-async def on_ready():
-    global is_connected
-    global server
+async def on_disconnect ():
+    global already_disconnected
+
+    if (not already_disconnected):
+        print('Disconnecting from JH network from on_disconnect?!')
+        time.sleep(10)
+        server.shutdown()
+        server.close()
+ 
+@client.event
+async def on_connect ():
     global args
+    global client
+    global server
 
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
     print('------')
-    if (not is_connected):
+
+    try:
         server.connect(args.destination)
-        is_connected = True
+    except Exception as exception:
+        print('Could not connect to JH network: ' + str(exception))
+        time.sleep(10)
+        client.close()
 
 @client.event
 async def on_message(message):
@@ -110,7 +126,7 @@ async def on_message(message):
 
         if (args.print_chat):
             print(
-                str(message.server)
+                str(message.guild)
                 + "#"
                 + str(message.channel.name)
                 + " <"
@@ -123,20 +139,14 @@ async def on_message(message):
                 print("#" + str(message.channel.name) + " <- " + str(result.encode('utf-8')))
 
         if (len(result) > 0):
-            await client.send_message(message.channel, result)
+            await message.channel.send(result)
     except Exception as exception:
         if (has_lock):
             server_mutex.release()
         print(exception)
+        time.sleep(10)
+        server.shutdown()
+        server.close()
+        client.close()
 
-def exit_if_disconnected ():
-    while True:
-        time.sleep(61)
-
-        if ((not client.is_logged_in) or client.is_closed):
-            print("Timed out.")
-            server.close()
-            sys.exit()
-
-threading.Thread(target=exit_if_disconnected).start()
 client.run(args.token)
