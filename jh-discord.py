@@ -3,6 +3,7 @@ import asyncio
 import argparse
 import socket
 import threading
+import random
 from threading import Lock
 import sys
 import time
@@ -28,6 +29,14 @@ parser.add_argument(
     '--token',
     type = str,
     help = 'Discord token.',
+)
+
+parser.add_argument(
+    '-u',
+    '--username-chance',
+    dest='username_chance',
+    type = int,
+    help = 'Chance [0-100] to focus on username instead.',
 )
 
 parser.add_argument(
@@ -83,7 +92,7 @@ async def on_disconnect ():
         time.sleep(10)
         server.shutdown()
         server.close()
- 
+
 @client.event
 async def on_connect ():
     global args
@@ -118,7 +127,14 @@ async def on_message(message):
 
         server_mutex.acquire()
         has_lock = True
-        server.sendall(b"?RLR " + msg + b"\n")
+
+        if (random.randint(1, 100) <= args.username_chance):
+            server.sendall(b"?RL " + msg + b"\n")
+            result = get_jh_reply()
+            msg = (message.author.display_name.encode('utf-8'))
+            server.sendall(b"?RR " + msg + b"\n")
+        else:
+            server.sendall(b"?RLR " + msg + b"\n")
 
         result = get_jh_reply()
         server_mutex.release()
