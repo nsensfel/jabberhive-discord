@@ -90,8 +90,8 @@ async def on_disconnect ():
     if (not already_disconnected):
         print('Disconnecting from JH network from on_disconnect?!')
         time.sleep(10)
-        server.shutdown()
         server.close()
+        sys.exit("l.94")
 
 @client.event
 async def on_connect ():
@@ -110,6 +110,7 @@ async def on_connect ():
         print('Could not connect to JH network: ' + str(exception))
         time.sleep(10)
         client.close()
+        sys.exit("l.113")
 
 @client.event
 async def on_message(message):
@@ -128,15 +129,36 @@ async def on_message(message):
         server_mutex.acquire()
         has_lock = True
 
-        if (random.randint(1, 100) <= args.username_chance):
-            server.sendall(b"?RL " + msg + b"\n")
-            result = get_jh_reply()
+#        if (random.randint(1, 100) <= args.username_chance):
+#            server.sendall(b"?RL " + msg + b"\n")
+#            result = get_jh_reply()
+#            msg = (message.author.display_name.encode('utf-8'))
+#            server.sendall(b"?RR " + msg + b"\n")
+#        else:
+#            server.sendall(b"?RLR " + msg + b"\n")
+#
+#        result = get_jh_reply()
+
+#       [DIRTY HACK]
+
+        server.sendall(b"?RLR " + msg + b"\n")
+        result = get_jh_reply()
+
+        if (
+            (len(result) > 0)
+            and (random.randint(1, 100) <= args.username_chance)
+        ):
             msg = (message.author.display_name.encode('utf-8'))
             server.sendall(b"?RR " + msg + b"\n")
-        else:
-            server.sendall(b"?RLR " + msg + b"\n")
+            new_result = get_jh_reply().strip()
 
-        result = get_jh_reply()
+            if (new_result != msg.decode('UTF-8').lower()):
+                print(new_result)
+                print(msg)
+                result = new_result
+
+#       [/DIRTY HACK]
+
         server_mutex.release()
         has_lock = False
 
@@ -161,8 +183,8 @@ async def on_message(message):
             server_mutex.release()
         print(exception)
         time.sleep(10)
-        server.shutdown()
         server.close()
         client.close()
+        sys.exit("l.189")
 
 client.run(args.token)
