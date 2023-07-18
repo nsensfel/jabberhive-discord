@@ -32,14 +32,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '-u',
-    '--username-chance',
-    dest='username_chance',
-    type = int,
-    help = 'Chance [0-100] to focus on username instead.',
-)
-
-parser.add_argument(
     '-c',
     '--print-chat',
     dest='print_chat',
@@ -129,35 +121,13 @@ async def on_message(message):
         server_mutex.acquire()
         has_lock = True
 
-#        if (random.randint(1, 100) <= args.username_chance):
-#            server.sendall(b"?RL " + msg + b"\n")
-#            result = get_jh_reply()
-#            msg = (message.author.display_name.encode('utf-8'))
-#            server.sendall(b"?RR " + msg + b"\n")
-#        else:
-#            server.sendall(b"?RLR " + msg + b"\n")
-#
-#        result = get_jh_reply()
-
-#       [DIRTY HACK]
-
+        server.sendall(
+            b"!AI username: "
+            + message.author.display_name.encode('utf-8')
+            + b"\n"
+        )
         server.sendall(b"?RLR " + msg + b"\n")
         result = get_jh_reply()
-
-        if (
-            (len(result) > 0)
-            and (random.randint(1, 100) <= args.username_chance)
-        ):
-            msg = (message.author.display_name.encode('utf-8'))
-            server.sendall(b"?RR " + msg + b"\n")
-            new_result = get_jh_reply().strip()
-
-            if (new_result != msg.decode('UTF-8').lower()):
-                print(new_result)
-                print(msg)
-                result = new_result
-
-#       [/DIRTY HACK]
 
         server_mutex.release()
         has_lock = False
