@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import discord
 import asyncio
 import argparse
@@ -41,9 +42,12 @@ parser.add_argument(
 
 args = parser.parse_args()
 server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-client = discord.Client()
+intents = discord.Intents().default()
+intents.message_content = True
+client = discord.Client(intents=intents)
 server_mutex = Lock()
 already_disconnected = False
+server.settimeout(120)
 
 def get_jh_reply ():
     global server
@@ -60,7 +64,10 @@ def get_jh_reply ():
         jh_reply = b""
 
         while (c != b"\n"):
-            c = server.recv(1)
+            try:
+               c = server.recv(1)
+            except Exception as exception:
+               sys.exit("l.69")
             jh_reply += c
 
         if ((jh_reply == b"!P \n") or (jh_reply == b"!N \n")):
@@ -71,6 +78,8 @@ def get_jh_reply ():
             if (jh_reply.startswith("!GR ")):
                 result = jh_reply[4:]
                 result = result[:-1]
+            else:
+               print(jh_reply)
 
     return result
 
